@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gridiron Dynasty — Legendary Rosters & Simulation</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f141c;--p:#18202b;--ink:#e8edf5;--mu:#98a3b3;--ln:#2b3644;--hd:#1d3f7a;--lk:#8ab4ff;--ac:#f0b429;--up:#5fd28a;--dn:#ff8a7a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#eceff3;--p:#fff;--ink:#16191f;--mu:#5d6673;--ln:#d5d9e0;--hd:#12264a;--lk:#1d4ed8;--ac:#f0b429;--up:#1b7a3d;--dn:#c0392b}}
+:root[data-theme="light"]{--bg:#eceff3;--p:#fff;--ink:#16191f;--mu:#5d6673;--ln:#d5d9e0;--hd:#12264a;--lk:#1d4ed8;--ac:#f0b429;--up:#1b7a3d;--dn:#c0392b}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:980px;margin:0 auto;padding:16px}
+header{background:var(--hd);color:#fff;border-radius:12px;padding:20px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between;box-shadow:0 4px 12px rgba(0,0,0,0.2)}
+.header-top{display:flex;justify-content:space-between;align-items:center;width:100%}
+h1{margin:0;font:700 34px/1 Oswald,Impact,sans-serif;letter-spacing:0.5px}
+.theme-btn{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:6px 12px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px}
+.theme-btn:hover{background:rgba(255,255,255,0.25)}
+.st{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;opacity:.95}.st b{display:block;font-size:18px}
+nav{display:flex;gap:4px;margin:16px 0;border-bottom:2px solid var(--ln);overflow-x:auto}
+nav button{background:none;border:0;padding:10px 14px;font:inherit;font-weight:600;color:var(--mu);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap}
+nav button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--ac)}
+section{background:var(--p);border:1px solid var(--ln);border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+.scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:520px}
+th,td{padding:9px 8px;text-align:left;border-bottom:1px solid var(--ln);white-space:nowrap}th{font-size:12px;color:var(--mu);text-transform:uppercase;letter-spacing:0.5px}
+.btn{background:var(--hd);color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;font-weight:600;cursor:pointer;margin:0 6px 8px 0;transition:transform 0.1s}
+.btn:active{transform:scale(0.98)}
+.btn.alt{background:transparent;color:var(--ink);border:1px solid var(--ln)}.btn.go{background:var(--ac);color:#1a1300;padding:12px 20px;font-weight:700}
+.lnk{background:none;border:0;padding:0;font:inherit;color:var(--lk);text-decoration:underline;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+input,select{font:inherit;padding:10px;border:1px solid var(--ln);border-radius:8px;background:var(--bg);color:var(--ink)}
+.mu{color:var(--mu);margin:0 0 12px}.up{color:var(--up);font-weight:600}.dn{color:var(--dn);font-weight:600}
+.empty{color:var(--mu);padding:24px 0;text-align:center}h3{margin:14px 0 8px;font:700 20px Oswald,sans-serif}
+ul{list-style:none;margin:0;padding:0}li{padding:6px 0;border-bottom:1px solid var(--ln)}
+.badge{display:inline-block;font-size:10px;background:var(--ac);color:#1a1300;padding:2px 7px;border-radius:10px;margin-left:6px;font-weight:700;vertical-align:middle}
+.action-bar{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:16px;align-items:center}
+</style>
+</head>
+<body>
+<main>
+<header>
+ <div class="header-top">
+   <div><h1>Gridiron Dynasty</h1><div style="opacity:.9;font-size:14px">32 legendary rosters · unified rating system · one league forever</div></div>
+   <button class="theme-btn" id="themeToggle">🌓 Theme</button>
+ </div>
+ <div class="st"><div>Season<b id="a"></b></div><div>Players<b id="b"></b></div><div>Last champion<b id="c"></b></div><div>Hall of Fame<b id="d"></b></div></div>
+</header>
+<nav id="nav"></nav>
+<section id="view"></section>
+<div class="action-bar">
+  <button class="btn go" data-a="play" id="play"></button>
+  <button class="btn alt" id="reset">Reset league</button>
+</div>
+</main>
+<script>
+(function(){
+var ROSTERS = {
+ "Arizona Cardinals": {
+   tag: "2015 NFC Championship run",
+   file: "roster-cardinals-2015.json",
+   players: [
+     {"forename": "Carson", "surname": "Palmer", "age": 35, "position": "QB", "rating": 92, "potential": 94},
+     {"forename": "David", "surname": "Johnson", "age": 24, "position": "RB", "rating": 89, "potential": 93},
+     {"forename": "Chris", "surname": "Johnson", "age": 30, "position": "RB", "rating": 82, "potential": 82},
+     {"forename": "Larry", "surname": "Fitzgerald", "age": 32, "position": "WR", "rating": 94, "potential": 95},
+     {"forename": "Michael", "surname": "Floyd", "age": 26, "position": "WR", "rating": 83, "potential": 86},
+     {"forename": "John", "surname": "Brown", "age": 25, "position": "WR", "rating": 82, "potential": 85},
+     {"forename": "Darren", "surname": "Fells", "age": 29, "position": "TE", "rating": 78, "potential": 78},
+     {"forename": "Jermaine", "surname": "Gresham", "age": 27, "position": "TE", "rating": 77, "potential": 79},
+     {"forename": "Jared", "surname": "Veldheer", "age": 28, "position": "OT", "rating": 88, "potential": 90},
+     {"forename": "Mike", "surname": "Iupati", "age": 28, "position": "OG", "rating": 88, "potential": 90},
+     {"forename": "Lyle", "surname": "Sendlein", "age": 31, "position": "C", "rating": 81, "potential": 81},
+     {"forename": "Bobby", "surname": "Massie", "age": 26, "position": "OT", "rating": 79, "potential": 82},
+     {"forename": "Calais", "surname": "Campbell", "age": 29, "position": "DE", "rating": 93, "potential": 95},
+     {"forename": "Frostee", "surname": "Rucker", "age": 32, "position": "DE", "rating": 82, "potential": 82},
+     {"forename": "Corey", "surname": "Peters", "age": 27, "position": "DT", "rating": 78, "potential": 80},
+     {"forename": "Karlos", "surname": "Dansby", "age": 34, "position": "MLB", "rating": 87, "potential": 87},
+     {"forename": "Deone", "surname": "Bucannon", "age": 23, "position": "MLB", "rating": 85, "potential": 90},
+     {"forename": "Markus", "surname": "Golden", "age": 24, "position": "OLB", "rating": 84, "potential": 89},
+     {"forename": "Dwight", "surname": "Freeney", "age": 35, "position": "OLB", "rating": 85, "potential": 85},
+     {"forename": "Patrick", "surname": "Peterson", "age": 25, "position": "CB", "rating": 95, "potential": 97},
+     {"forename": "Tyrann", "surname": "Mathieu", "age": 23, "position": "CB", "rating": 92, "potential": 96},
+     {"forename": "Jerraud", "surname": "Powers", "age": 28, "position": "CB", "rating": 80, "potential": 80},
+     {"forename": "Tony", "surname": "Jefferson", "age": 23, "position": "S", "rating": 83, "potential": 88},
+     {"forename": "Rashad", "surname": "Johnson", "age": 30, "position": "S", "rating": 82, "potential": 82},
+     {"forename": "Chandler", "surname": "Catanzaro", "age": 24, "position": "K", "rating": 80, "potential": 85},
+     {"forename": "Drew", "surname": "Butler", "age": 26, "position": "P", "rating": 74, "potential": 76}
+   ]
+ },
+ "Atlanta Falcons": {
+   tag: "2016 NFC Championship season",
+   file: "roster-falcons-2016.json",
+   players: [
+     {"forename": "Matt", "surname": "Ryan", "age": 31, "position": "QB", "rating": 94, "potential": 95},
+     {"forename": "Devonta", "surname": "Freeman", "age": 24, "position": "RB", "rating": 89, "potential": 92},
+     {"forename": "Tevin", "surname": "Coleman", "age": 23, "position": "RB", "rating": 84, "potential": 89},
+     {"forename": "Julio", "surname": "Jones", "age": 27, "position": "WR", "rating": 97, "potential": 98},
+     {"forename": "Mohamed", "surname": "Sanu", "age": 27, "position": "WR", "rating": 83, "potential": 85},
+     {"forename": "Taylor", "surname": "Gabriel", "age": 25, "position": "WR", "rating": 82, "potential": 85},
+     {"forename": "Austin", "surname": "Hooper", "age": 22, "position": "TE", "rating": 80, "potential": 87},
+     {"forename": "Jake", "surname": "Matthews", "age": 24, "position": "OT", "rating": 88, "potential": 92},
+     {"forename": "Andy", "surname": "Levitre", "age": 30, "position": "OG", "rating": 86, "potential": 86},
+     {"forename": "Alex", "surname": "Mack", "age": 30, "position": "C", "rating": 92, "potential": 92},
+     {"forename": "Ryan", "surname": "Schraeder", "age": 28, "position": "OT", "rating": 87, "potential": 88},
+     {"forename": "Vic", "surname": "Beasley", "age": 24, "position": "DE", "rating": 89, "potential": 93},
+     {"forename": "Grady", "surname": "Jarrett", "age": 23, "position": "DT", "rating": 87, "potential": 92},
+     {"forename": "Adrian", "surname": "Clayborn", "age": 28, "position": "DE", "rating": 80, "potential": 81},
+     {"forename": "Deion", "surname": "Jones", "age": 22, "position": "MLB", "rating": 88, "potential": 93},
+     {"forename": "De'Vondre", "surname": "Campbell", "age": 23, "position": "OLB", "rating": 79, "potential": 84},
+     {"forename": "Desmond", "surname": "Trufant", "age": 26, "position": "CB", "rating": 89, "potential": 91},
+     {"forename": "Robert", "surname": "Alford", "age": 28, "position": "CB", "rating": 83, "potential": 84},
+     {"forename": "Brian", "surname": "Poole", "age": 24, "position": "CB", "rating": 79, "potential": 84},
+     {"forename": "Keanu", "surname": "Neal", "age": 21, "position": "S", "rating": 86, "potential": 93},
+     {"forename": "Ricardo", "surname": "Allen", "age": 25, "position": "S", "rating": 81, "potential": 85},
+     {"forename": "Matt", "surname": "Bryant", "age": 41, "position": "K", "rating": 87, "potential": 87},
+     {"forename": "Matt", "surname": "Bosher", "age": 28, "position": "P", "rating": 79, "potential": 79}
+   ]
+ },
+ "Baltimore Ravens": {
+   tag: "2012 Super Bowl XLVII champions",
+   file: "roster-ravens-2012.json",
+   players: [
+     {"forename": "Joe", "surname": "Flacco", "age": 27, "position": "QB", "rating": 92, "potential": 94},
+     {"forename": "Ray", "surname": "Rice", "age": 25, "position": "RB", "rating": 89, "potential": 92},
+     {"forename": "Bernard", "surname": "Pierce", "age": 22, "position": "RB", "rating": 79, "potential": 85},
+     {"forename": "Anquan", "surname": "Boldin", "age": 32, "position": "WR", "rating": 91, "potential": 91},
+     {"forename": "Torrey", "surname": "Smith", "age": 23, "position": "WR", "rating": 85, "potential": 90},
+     {"forename": "Jacoby", "surname": "Jones", "age": 28, "position": "WR", "rating": 79, "potential": 79},
+     {"forename": "Dennis", "surname": "Pitta", "age": 27, "position": "TE", "rating": 84, "potential": 87},
+     {"forename": "Michael", "surname": "Oher", "age": 26, "position": "OT", "rating": 82, "potential": 85},
+     {"forename": "Marshal", "surname": "Yanda", "age": 28, "position": "OG", "rating": 94, "potential": 95},
+     {"forename": "Matt", "surname": "Birk", "age": 36, "position": "C", "rating": 85, "potential": 85},
+     {"forename": "Kelechi", "surname": "Osemele", "age": 23, "position": "OG", "rating": 84, "potential": 90},
+     {"forename": "Bryant", "surname": "McKinnie", "age": 33, "position": "OT", "rating": 81, "potential": 81},
+     {"forename": "Haloti", "surname": "Ngata", "age": 28, "position": "DT", "rating": 94, "potential": 95},
+     {"forename": "Terrell", "surname": "Suggs", "age": 30, "position": "DE", "rating": 93, "potential": 94},
+     {"forename": "Pernell", "surname": "McPhee", "age": 24, "position": "DE", "rating": 84, "potential": 89},
+     {"forename": "Ray", "surname": "Lewis", "age": 37, "position": "MLB", "rating": 92, "potential": 92},
+     {"forename": "Dannell", "surname": "Ellerbe", "age": 26, "position": "MLB", "rating": 84, "potential": 87},
+     {"forename": "Lardarius", "surname": "Webb", "age": 27, "position": "CB", "rating": 88, "potential": 90},
+     {"forename": "Cary", "surname": "Williams", "age": 28, "position": "CB", "rating": 82, "potential": 83},
+     {"forename": "Jimmy", "surname": "Smith", "age": 24, "position": "CB", "rating": 83, "potential": 89},
+     {"forename": "Ed", "surname": "Reed", "age": 34, "position": "S", "rating": 94, "potential": 94},
+     {"forename": "Bernard", "surname": "Pollard", "age": 27, "position": "S", "rating": 84, "potential": 85},
+     {"forename": "Justin", "surname": "Tucker", "age": 23, "position": "K", "rating": 91, "potential": 96},
+     {"forename": "Sam", "surname": "Koch", "age": 30, "position": "P", "rating": 80, "potential": 80}
+   ]
+ },
+ "Buffalo Bills": {
+   tag: "1990 AFC champions",
+   file: "roster-bills-1990.json",
+   players: [
+     {"forename": "Jim", "surname": "Kelly", "age": 30, "position": "QB", "rating": 95, "potential": 96},
+     {"forename": "Thurman", "surname": "Thomas", "age": 24, "position": "RB", "rating": 96, "potential": 98},
+     {"forename": "Kenneth", "surname": "Davis", "age": 28, "position": "RB", "rating": 82, "potential": 83},
+     {"forename": "Andre", "surname": "Reed", "age": 26, "position": "WR", "rating": 94, "potential": 96},
+     {"forename": "James", "surname": "Lofton", "age": 34, "position": "WR", "rating": 89, "potential": 89},
+     {"forename": "Don", "surname": "Beebe", "age": 25, "position": "WR", "rating": 80, "potential": 84},
+     {"forename": "Keith", "surname": "McKeller", "age": 27, "position": "TE", "rating": 77, "potential": 80},
+     {"forename": "Will", "surname": "Wolford", "age": 28, "position": "OT", "rating": 90, "potential": 92},
+     {"forename": "Jim", "surname": "Ritcher", "age": 32, "position": "OG", "rating": 87, "potential": 87},
+     {"forename": "Kent", "surname": "Hull", "age": 29, "position": "C", "rating": 89, "potential": 90},
+     {"forename": "Howard", "surname": "Ballard", "age": 27, "position": "OT", "rating": 86, "potential": 89},
+     {"forename": "Bruce", "surname": "Smith", "age": 27, "position": "DE", "rating": 99, "potential": 99},
+     {"forename": "Jeff", "surname": "Wright", "age": 25, "position": "DT", "rating": 84, "potential": 88},
+     {"forename": "Cornelius", "surname": "Bennett", "age": 25, "position": "OLB", "rating": 93, "potential": 96},
+     {"forename": "Darryl", "surname": "Talley", "age": 30, "position": "OLB", "rating": 88, "potential": 89},
+     {"forename": "Shane", "surname": "Conlan", "age": 25, "position": "MLB", "rating": 87, "potential": 91},
+     {"forename": "Nate", "surname": "Odomes", "age": 25, "position": "CB", "rating": 85, "potential": 90},
+     {"forename": "Kirby", "surname": "Jackson", "age": 25, "position": "CB", "rating": 82, "potential": 86},
+     {"forename": "Mark", "surname": "Kelso", "age": 27, "position": "S", "rating": 84, "potential": 87},
+     {"forename": "Leonard", "surname": "Smith", "age": 30, "position": "S", "rating": 82, "potential": 82},
+     {"forename": "Scott", "surname": "Norwood", "age": 30, "position": "K", "rating": 79, "potential": 79},
+     {"forename": "Rick", "surname": "Tuten", "age": 25, "position": "P", "rating": 78, "potential": 82}
+   ]
+ },
+ "Carolina Panthers": {
+   tag: "2015 NFC champions",
+   file: "roster-panthers-2015.json",
+   players: [
+     {"forename": "Cam", "surname": "Newton", "age": 26, "position": "QB", "rating": 96, "potential": 98},
+     {"forename": "Jonathan", "surname": "Stewart", "age": 28, "position": "RB", "rating": 87, "potential": 88},
+     {"forename": "Mike", "surname": "Tolbert", "age": 30, "position": "RB", "rating": 81, "potential": 81},
+     {"forename": "Ted", "surname": "Ginn Jr.", "age": 30, "position": "WR", "rating": 82, "potential": 82},
+     {"forename": "Devin", "surname": "Funchess", "age": 21, "position": "WR", "rating": 80, "potential": 87},
+     {"forename": "Greg", "surname": "Olsen", "age": 30, "position": "TE", "rating": 94, "potential": 95},
+     {"forename": "Michael", "surname": "Oher", "age": 29, "position": "OT", "rating": 83, "potential": 84},
+     {"forename": "Andrew", "surname": "Norwell", "age": 24, "position": "OG", "rating": 88, "potential": 92},
+     {"forename": "Ryan", "surname": "Kalil", "age": 30, "position": "C", "rating": 91, "potential": 92},
+     {"forename": "Trai", "surname": "Turner", "age": 22, "position": "OG", "rating": 87, "potential": 93},
+     {"forename": "Mike", "surname": "Remmers", "age": 26, "position": "OT", "rating": 80, "potential": 84},
+     {"forename": "Kawann", "surname": "Short", "age": 26, "position": "DT", "rating": 91, "potential": 94},
+     {"forename": "Star", "surname": "Lotulelei", "age": 25, "position": "DT", "rating": 87, "potential": 91},
+     {"forename": "Charles", "surname": "Johnson", "age": 29, "position": "DE", "rating": 88, "potential": 88},
+     {"forename": "Jared", "surname": "Allen", "age": 33, "position": "DE", "rating": 84, "potential": 84},
+     {"forename": "Luke", "surname": "Kuechly", "age": 24, "position": "MLB", "rating": 98, "potential": 99},
+     {"forename": "Thomas", "surname": "Davis", "age": 32, "position": "OLB", "rating": 91, "potential": 91},
+     {"forename": "Shaq", "surname": "Thompson", "age": 21, "position": "OLB", "rating": 82, "potential": 89},
+     {"forename": "Josh", "surname": "Norman", "age": 28, "position": "CB", "rating": 94, "potential": 95},
+     {"forename": "Bene", "surname": "Benwikere", "age": 24, "position": "CB", "rating": 82, "potential": 87},
+     {"forename": "Kurt", "surname": "Coleman", "age": 27, "position": "S", "rating": 87, "potential": 89},
+     {"forename": "Roman", "surname": "Harper", "age": 33, "position": "S", "rating": 82, "potential": 82},
+     {"forename": "Graham", "surname": "Gano", "age": 28, "position": "K", "rating": 84, "potential": 86},
+     {"forename": "Brad", "surname": "Nortman", "age": 26, "position": "P", "rating": 77, "potential": 80}
+   ]
+ },
+ "Chicago Bears": {
+   tag: "1985 Super Bowl XX champions",
+   file: "roster-bears-1985.json",
+   players: [
+     {"forename": "Jim", "surname": "McMahon", "age": 26, "position": "QB", "rating": 89, "potential": 92},
+     {"forename": "Walter", "surname": "Payton", "age": 31, "position": "RB", "rating": 98, "potential": 98},
+     {"forename": "Matt", "surname": "Suhey", "age": 27, "position": "RB", "rating": 82, "potential": 83},
+     {"forename": "Willie", "surname": "Gault", "age": 25, "position": "WR", "rating": 84, "potential": 88},
+     {"forename": "Dennis", "surname": "McKinnon", "age": 24, "position": "WR", "rating": 80, "potential": 85},
+     {"forename": "Emery", "surname": "Moorehead", "age": 31, "position": "TE", "rating": 82, "potential": 82},
+     {"forename": "Jim", "surname": "Covert", "age": 25, "position": "OT", "rating": 93, "potential": 96},
+     {"forename": "Jay", "surname": "Hilgenberg", "age": 26, "position": "C", "rating": 91, "potential": 94},
+     {"forename": "Keith", "surname": "Van Horne", "age": 28, "position": "OT", "rating": 86, "potential": 86},
+     {"forename": "Mark", "surname": "Bortz", "age": 23, "position": "OG", "rating": 88, "potential": 93},
+     {"forename": "Tom", "surname": "Thayer", "age": 24, "position": "OG", "rating": 85, "potential": 90},
+     {"forename": "Richard", "surname": "Dent", "age": 25, "position": "DE", "rating": 96, "potential": 98},
+     {"forename": "Dan", "surname": "Hampton", "age": 28, "position": "DT", "rating": 95, "potential": 96},
+     {"forename": "Steve", "surname": "McMichael", "age": 28, "position": "DT", "rating": 89, "potential": 90},
+     {"forename": "William", "surname": "Perry", "age": 23, "position": "DT", "rating": 88, "potential": 92},
+     {"forename": "Mike", "surname": "Singletary", "age": 27, "position": "MLB", "rating": 98, "potential": 98},
+     {"forename": "Otis", "surname": "Wilson", "age": 28, "position": "OLB", "rating": 92, "potential": 92},
+     {"forename": "Wilber", "surname": "Marshall", "age": 23, "position": "OLB", "rating": 91, "potential": 96},
+     {"forename": "Leslie", "surname": "Frazier", "age": 26, "position": "CB", "rating": 91, "potential": 93},
+     {"forename": "Mike", "surname": "Richardson", "age": 24, "position": "CB", "rating": 88, "potential": 92},
+     {"forename": "Gary", "surname": "Fencik", "age": 31, "position": "S", "rating": 92, "potential": 92},
+     {"forename": "Dave", "surname": "Duerson", "age": 25, "position": "S", "rating": 91, "potential": 95},
+     {"forename": "Kevin", "surname": "Butler", "age": 23, "position": "K", "rating": 86, "potential": 92},
+     {"forename": "Maury", "surname": "Buford", "age": 25, "position": "P", "rating": 76, "potential": 80}
+   ]
+ },
+ "Cincinnati Bengals": {
+   tag: "1981 AFC champions",
+   file: "roster-bengals-1981.json",
+   players: [
+     {"forename": "Ken", "surname": "Anderson", "age": 32, "position": "QB", "rating": 93, "potential": 93},
+     {"forename": "Pete", "surname": "Johnson", "age": 27, "position": "RB", "rating": 89, "potential": 90},
+     {"forename": "Charles", "surname": "Alexander", "age": 24, "position": "RB", "rating": 80, "potential": 84},
+     {"forename": "Cris", "surname": "Collinsworth", "age": 22, "position": "WR", "rating": 91, "potential": 97},
+     {"forename": "Isaac", "surname": "Curtis", "age": 31, "position": "WR", "rating": 88, "potential": 88},
+     {"forename": "Dan", "surname": "Ross", "age": 24, "position": "TE", "rating": 83, "potential": 88},
+     {"forename": "Anthony", "surname": "Munoz", "age": 23, "position": "OT", "rating": 99, "potential": 99},
+     {"forename": "Max", "surname": "Montoya", "age": 25, "position": "OG", "rating": 90, "potential": 93},
+     {"forename": "Blair", "surname": "Bush", "age": 25, "position": "C", "rating": 84, "potential": 88},
+     {"forename": "Dave", "surname": "Lapham", "age": 29, "position": "OG", "rating": 83, "potential": 83},
+     {"forename": "Eddie", "surname": "Edwards", "age": 27, "position": "DE", "rating": 88, "potential": 90},
+     {"forename": "Ross", "surname": "Browner", "age": 27, "position": "DE", "rating": 89, "potential": 90},
+     {"forename": "Coy", "surname": "Bacon", "age": 39, "position": "DT", "rating": 87, "potential": 87},
+     {"forename": "Reggie", "surname": "Williams", "age": 27, "position": "OLB", "rating": 90, "potential": 91},
+     {"forename": "Jim", "surname": "LeClair", "age": 31, "position": "MLB", "rating": 86, "potential": 86},
+     {"forename": "Louis", "surname": "Breeden", "age": 28, "position": "CB", "rating": 88, "potential": 90},
+     {"forename": "Ken", "surname": "Riley", "age": 34, "position": "CB", "rating": 91, "potential": 91},
+     {"forename": "Tommy", "surname": "Casanova", "age": 31, "position": "S", "rating": 88, "potential": 88},
+     {"forename": "Jim", "surname": "Breech", "age": 25, "position": "K", "rating": 85, "potential": 89},
+     {"forename": "Pat", "surname": "McInally", "age": 28, "position": "P", "rating": 82, "potential": 84}
+   ]
+ },
+ "Cleveland Browns": {
+   tag: "1986 AFC Championship run",
+   file: "roster-browns-1986.json",
+   players: [
+     {"forename": "Bernie", "surname": "Kosar", "age": 23, "position": "QB", "rating": 92, "potential": 96},
+     {"forename": "Earnest", "surname": "Byner", "age": 24, "position": "RB", "rating": 90, "potential": 94},
+     {"forename": "Kevin", "surname": "Mack", "age": 24, "position": "RB", "rating": 88, "potential": 92},
+     {"forename": "Webster", "surname": "Slaughter", "age": 22, "position": "WR", "rating": 86, "potential": 92},
+     {"forename": "Reggie", "surname": "Langhorne", "age": 23, "position": "WR", "rating": 83, "potential": 88},
+     {"forename": "Ozzie", "surname": "Newsome", "age": 30, "position": "TE", "rating": 95, "potential": 95},
+     {"forename": "Cody", "surname": "Risien", "age": 29, "position": "OT", "rating": 87, "potential": 87},
+     {"forename": "Mike", "surname": "Baab", "age": 27, "position": "C", "rating": 86, "potential": 88},
+     {"forename": "Reggie", "surname": "Camp", "age": 25, "position": "DE", "rating": 87, "potential": 91},
+     {"forename": "Michael Dean", "surname": "Perry", "age": 21, "position": "DT", "rating": 90, "potential": 96},
+     {"forename": "Bob", "surname": "Golic", "age": 29, "position": "DT", "rating": 88, "potential": 89},
+     {"forename": "Clay", "surname": "Matthews", "age": 30, "position": "OLB", "rating": 92, "potential": 93},
+     {"forename": "Chip", "surname": "Banks", "age": 27, "position": "OLB", "rating": 90, "potential": 92},
+     {"forename": "Frank", "surname": "Minnifield", "age": 26, "position": "CB", "rating": 93, "potential": 95},
+     {"forename": "Hanford", "surname": "Dixon", "age": 28, "position": "CB", "rating": 94, "potential": 95},
+     {"forename": "Don", "surname": "Rogers", "age": 24, "position": "S", "rating": 87, "potential": 93},
+     {"forename": "Felix", "surname": "Wright", "age": 27, "position": "S", "rating": 83, "potential": 86},
+     {"forename": "Matt", "surname": "Bahr", "age": 30, "position": "K", "rating": 85, "potential": 85},
+     {"forename": "Jeff", "surname": "Gossett", "age": 29, "position": "P", "rating": 76, "potential": 78}
+   ]
+ },
+ "Dallas Cowboys": {
+   tag: "1992 Super Bowl XXVII champions",
+   file: "roster-cowboys-1992.json",
+   players: [
+     {"forename": "Troy", "surname": "Aikman", "age": 26, "position": "QB", "rating": 95, "potential": 97},
+     {"forename": "Emmitt", "surname": "Smith", "age": 23, "position": "RB", "rating": 98, "potential": 99},
+     {"forename": "Michael", "surname": "Irvin", "age": 26, "position": "WR", "rating": 97, "potential": 98},
+     {"forename": "Alvin", "surname": "Harper", "age": 25, "position": "WR", "rating": 88, "potential": 92},
+     {"forename": "Jay", "surname": "Novacek", "age": 30, "position": "TE", "rating": 90, "potential": 90},
+     {"forename": "Mark", "surname": "Tuinei", "age": 32, "position": "OT", "rating": 90, "potential": 90},
+     {"forename": "Nate", "surname": "Newton", "age": 30, "position": "OG", "rating": 93, "potential": 94},
+     {"forename": "Mark", "surname": "Stepnoski", "age": 25, "position": "C", "rating": 91, "potential": 95},
+     {"forename": "Erik", "surname": "Williams", "age": 24, "position": "OT", "rating": 90, "potential": 95},
+     {"forename": "Kevin", "surname": "Gogan", "age": 28, "position": "OG", "rating": 86, "potential": 88},
+     {"forename": "Charles", "surname": "Haley", "age": 28, "position": "DE", "rating": 95, "potential": 96},
+     {"forename": "Tony", "surname": "Tolbert", "age": 27, "position": "DE", "rating": 88, "potential": 90},
+     {"forename": "Tony", "surname": "Casillas", "age": 29, "position": "DT", "rating": 88, "potential": 89},
+     {"forename": "Russell", "surname": "Maryland", "age": 23, "position": "DT", "rating": 86, "potential": 92},
+     {"forename": "Leon", "surname": "Lett", "age": 24, "position": "DT", "rating": 88, "potential": 94},
+     {"forename": "Ken", "surname": "Norton Jr.", "age": 26, "position": "MLB", "rating": 92, "potential": 94},
+     {"forename": "Robert", "surname": "Jones", "age": 23, "position": "OLB", "rating": 85, "potential": 91},
+     {"forename": "Larry", "surname": "Brown", "age": 23, "position": "CB", "rating": 88, "potential": 93},
+     {"forename": "Kevin", "surname": "Smith", "age": 22, "position": "CB", "rating": 86, "potential": 94},
+     {"forename": "James", "surname": "Washington", "age": 27, "position": "S", "rating": 87, "potential": 89},
+     {"forename": "Darren", "surname": "Woodson", "age": 23, "position": "S", "rating": 89, "potential": 95},
+     {"forename": "Lin", "surname": "Elliott", "age": 23, "position": "K", "rating": 80, "potential": 86},
+     {"forename": "Mike", "surname": "Saxon", "age": 30, "position": "P", "rating": 77, "potential": 77}
+   ]
+ },
+ "Denver Broncos": {
+   tag: "1998 Super Bowl XXXIII champions",
+   file: "roster-broncos-1998.json",
+   players: [
+     {"forename": "John", "surname": "Elway", "age": 38, "position": "QB", "rating": 97, "potential": 97},
+     {"forename": "Terrell", "surname": "Davis", "age": 26, "position": "RB", "rating": 98, "potential": 99},
+     {"forename": "Rod", "surname": "Smith", "age": 32, "position": "WR", "rating": 92, "potential": 92},
+     {"forename": "Ed", "surname": "McCaffrey", "age": 30, "position": "WR", "rating": 89, "potential": 90},
+     {"forename": "Shannon", "surname": "Sharpe", "age": 30, "position": "TE", "rating": 96, "potential": 97},
+     {"forename": "Gary", "surname": "Zimmerman", "age": 37, "position": "OT", "rating": 93, "potential": 93},
+     {"forename": "Tony", "surname": "Jones", "age": 32, "position": "OT", "rating": 88, "potential": 88},
+     {"forename": "Tom", "surname": "Nalen", "age": 27, "position": "C", "rating": 91, "potential": 94},
+     {"forename": "Mark", "surname": "Schlereth", "age": 32, "position": "OG", "rating": 87, "potential": 87},
+     {"forename": "Neil", "surname": "Smith", "age": 32, "position": "DE", "rating": 91, "potential": 91},
+     {"forename": "Trevor", "surname": "Pryce", "age": 23, "position": "DT", "rating": 89, "potential": 95},
+     {"forename": "Bill", "surname": "Romanowski", "age": 32, "position": "MLB", "rating": 92, "potential": 92},
+     {"forename": "John", "surname": "Mobley", "age": 25, "position": "OLB", "rating": 89, "potential": 92},
+     {"forename": "Ray", "surname": "Crockett", "age": 31, "position": "CB", "rating": 88, "potential": 88},
+     {"forename": "Dale", "surname": "Carter", "age": 29, "position": "CB", "rating": 90, "potential": 91},
+     {"forename": "Steve", "surname": "Atwater", "age": 32, "position": "S", "rating": 94, "potential": 94},
+     {"forename": "Tyrone", "surname": "Braxton", "age": 34, "position": "S", "rating": 89, "potential": 89},
+     {"forename": "Jason", "surname": "Elam", "age": 28, "position": "K", "rating": 89, "potential": 92},
+     {"forename": "Tom", "surname": "Rouen", "age": 30, "position": "P", "rating": 79, "potential": 80}
+   ]
+ },
+ "Detroit Lions": {
+   tag: "1991 NFC Championship run",
+   file: "roster-lions-1991.json",
+   players: [
+     {"forename": "Erik", "surname": "Kramer", "age": 26, "position": "QB", "rating": 88, "potential": 91},
+     {"forename": "Barry", "surname": "Sanders", "age": 23, "position": "RB", "rating": 99, "potential": 99},
+     {"forename": "Mel", "surname": "Gray", "age": 30, "position": "RB", "rating": 82, "potential": 82},
+     {"forename": "Herman", "surname": "Moore", "age": 22, "position": "WR", "rating": 90, "potential": 96},
+     {"forename": "Brett", "surname": "Perriman", "age": 26, "position": "WR", "rating": 87, "potential": 90},
+     {"forename": "Rodney", "surname": "Holman", "age": 31, "position": "TE", "rating": 87, "potential": 87},
+     {"forename": "Lomas", "surname": "Brown", "age": 28, "position": "OT", "rating": 92, "potential": 94},
+     {"forename": "Kevin", "surname": "Glover", "age": 28, "position": "C", "rating": 88, "potential": 90},
+     {"forename": "Mike", "surname": "Utley", "age": 25, "position": "OG", "rating": 84, "potential": 89},
+     {"forename": "Robert", "surname": "Porcher", "age": 22, "position": "DE", "rating": 88, "potential": 94},
+     {"forename": "Jerry", "surname": "Ball", "age": 31, "position": "DT", "rating": 91, "potential": 91},
+     {"forename": "Chris", "surname": "Spielman", "age": 26, "position": "MLB", "rating": 95, "potential": 97},
+     {"forename": "Bennie", "surname": "Blades", "age": 25, "position": "S", "rating": 91, "potential": 94},
+     {"forename": "William", "surname": "White", "age": 25, "position": "CB", "rating": 82, "potential": 87},
+     {"forename": "Jason", "surname": "Hanson", "age": 21, "position": "K", "rating": 90, "potential": 96},
+     {"forename": "Jim", "surname": "Arnold", "age": 30, "position": "P", "rating": 79, "potential": 79}
+   ]
+ },
+ "Green Bay Packers": {
+   tag: "1996 Super Bowl XXXI champions",
+   file: "roster-packers-1996.json",
+   players: [
+     {"forename": "Brett", "surname": "Favre", "age": 27, "position": "QB", "rating": 98, "potential": 99},
+     {"forename": "Edgar", "surname": "Bennett", "age": 27, "position": "RB", "rating": 86, "potential": 88},
+     {"forename": "Dorsey", "surname": "Levens", "age": 26, "position": "RB", "rating": 84, "potential": 89},
+     {"forename": "Antonio", "surname": "Freeman", "age": 24, "position": "WR", "rating": 91, "potential": 95},
+     {"forename": "Robert", "surname": "Brooks", "age": 27, "position": "WR", "rating": 89, "potential": 91},
+     {"forename": "Mark", "surname": "Chmura", "age": 27, "position": "TE", "rating": 88, "potential": 90},
+     {"forename": "Ken", "surname": "Ruettgers", "age": 34, "position": "OT", "rating": 89, "potential": 89},
+     {"forename": "Frank", "surname": "Winters", "age": 32, "position": "C", "rating": 88, "potential": 88},
+     {"forename": "Adam", "surname": "Timmerman", "age": 25, "position": "OG", "rating": 87, "potential": 91},
+     {"forename": "Reggie", "surname": "White", "age": 35, "position": "DE", "rating": 99, "potential": 99},
+     {"forename": "Santana", "surname": "Dotson", "age": 27, "position": "DT", "rating": 88, "potential": 91},
+     {"forename": "Gilbert", "surname": "Brown", "age": 25, "position": "DT", "rating": 91, "potential": 94},
+     {"forename": "Sean", "surname": "Jones", "age": 34, "position": "DE", "rating": 90, "potential": 90},
+     {"forename": "Wayne", "surname": "Simmons", "age": 27, "position": "OLB", "rating": 89, "potential": 91},
+     {"forename": "George", "surname": "Koonce", "age": 28, "position": "MLB", "rating": 85, "potential": 87},
+     {"forename": "Doug", "surname": "Evans", "age": 26, "position": "CB", "rating": 89, "potential": 92},
+     {"forename": "Craig", "surname": "Newsome", "age": 25, "position": "CB", "rating": 86, "potential": 90},
+     {"forename": "LeRoy", "surname": "Butler", "age": 28, "position": "S", "rating": 94, "potential": 96},
+     {"forename": "Eugene", "surname": "Robinson", "age": 33, "position": "S", "rating": 87, "potential": 87},
+     {"forename": "Chris", "surname": "Jacke", "age": 30, "position": "K", "rating": 84, "potential": 84},
+     {"forename": "Craig", "surname": "Hentrich", "age": 25, "position": "P", "rating": 83, "potential": 87}
+   ]
+ },
+ "Houston Texans": {
+   tag: "2012 AFC South champions",
+   file: "roster-texans-2012.json",
+   players: [
+     {"forename": "Matt", "surname": "Schaub", "age": 31, "position": "QB", "rating": 89, "potential": 90},
+     {"forename": "Arian", "surname": "Foster", "age": 26, "position": "RB", "rating": 93, "potential": 95},
+     {"forename": "Ben", "surname": "Tate", "age": 24, "position": "RB", "rating": 82, "potential": 87},
+     {"forename": "Andre", "surname": "Johnson", "age": 31, "position": "WR", "rating": 96, "potential": 96},
+     {"forename": "Kevin", "surname": "Walter", "age": 31, "position": "WR", "rating": 82, "potential": 82},
+     {"forename": "Owen", "surname": "Daniels", "age": 30, "position": "TE", "rating": 89, "potential": 90},
+     {"forename": "Duane", "surname": "Brown", "age": 27, "position": "OT", "rating": 92, "potential": 95},
+     {"forename": "Chris", "surname": "Myers", "age": 31, "position": "C", "rating": 88, "potential": 88},
+     {"forename": "Wade", "surname": "Smith", "age": 31, "position": "OG", "rating": 86, "potential": 86},
+     {"forename": "J.J.", "surname": "Watt", "age": 23, "position": "DE", "rating": 99, "potential": 99},
+     {"forename": "Antonio", "surname": "Smith", "age": 31, "position": "DE", "rating": 88, "potential": 88},
+     {"forename": "Brian", "surname": "Cushing", "age": 25, "position": "MLB", "rating": 91, "potential": 94},
+     {"forename": "Johnathan", "surname": "Joseph", "age": 28, "position": "CB", "rating": 93, "potential": 94},
+     {"forename": "Kareem", "surname": "Jackson", "age": 24, "position": "CB", "rating": 85, "potential": 90},
+     {"forename": "Ed", "surname": "Reed", "age": 34, "position": "S", "rating": 92, "potential": 92},
+     {"forename": "Danieal", "surname": "Manning", "age": 30, "position": "S", "rating": 86, "potential": 86},
+     {"forename": "Shayne", "surname": "Graham", "age": 35, "position": "K", "rating": 83, "potential": 83},
+     {"forename": "Donnie", "surname": "Jones", "age": 32, "position": "P", "rating": 79, "potential": 79}
+   ]
+ },
+ "Indianapolis Colts": {
+   tag: "2006 Super Bowl XLI champions",
+   file: "roster-colts-2006.json",
+   players: [
+     {"forename": "Peyton", "surname": "Manning", "age": 30, "position": "QB", "rating": 99, "potential": 99},
+     {"forename": "Joseph", "surname": "Addai", "age": 23, "position": "RB", "rating": 87, "potential": 92},
+     {"forename": "Dominic", "surname": "Rhodes", "age": 27, "position": "RB", "rating": 84, "potential": 85},
+     {"forename": "Marvin", "surname": "Harrison", "age": 34, "position": "WR", "rating": 97, "potential": 97},
+     {"forename": "Reggie", "surname": "Wayne", "age": 27, "position": "WR", "rating": 94, "potential": 96},
+     {"forename": "Dallas", "surname": "Clark", "age": 27, "position": "TE", "rating": 89, "potential": 92},
+     {"forename": "Tarik", "surname": "Glenn", "age": 30, "position": "OT", "rating": 91, "potential": 91},
+     {"forename": "Jeff", "surname": "Saturday", "age": 31, "position": "C", "rating": 93, "potential": 93},
+     {"forename": "Ryan", "surname": "Diem", "age": 27, "position": "OT", "rating": 86, "potential": 89},
+     {"forename": "Dwight", "surname": "Freeney", "age": 26, "position": "DE", "rating": 97, "potential": 98},
+     {"forename": "Robert", "surname": "Mathis", "age": 25, "position": "DE", "rating": 92, "potential": 95},
+     {"forename": "Gary", "surname": "Brackett", "age": 26, "position": "MLB", "rating": 89, "potential": 92},
+     {"forename": "Cato", "surname": "June", "age": 26, "position": "OLB", "rating": 85, "potential": 88},
+     {"forename": "Bob", "surname": "Sanders", "age": 25, "position": "S", "rating": 97, "potential": 98},
+     {"forename": "Antoine", "surname": "Bethea", "age": 22, "position": "S", "rating": 87, "potential": 93},
+     {"forename": "Adam", "surname": "Vinatieri", "age": 33, "position": "K", "rating": 92, "potential": 92},
+     {"forename": "Hunter", "surname": "Smith", "age": 29, "position": "P", "rating": 80, "potential": 80}
+   ]
+ },
+ "Jacksonville Jaguars": {
+   tag: "1999 AFC Championship run",
+   file: "roster-jaguars-1999.json",
+   players: [
+     {"forename": "Mark", "surname": "Brunell", "age": 29, "position": "QB", "rating": 91, "potential": 93},
+     {"forename": "Fred", "surname": "Taylor", "age": 23, "position": "RB", "rating": 93, "potential": 97},
+     {"forename": "Jimmy", "surname": "Smith", "age": 30, "position": "WR", "rating": 94, "potential": 95},
+     {"forename": "Keenan", "surname": "McCardell", "age": 29, "position": "WR", "rating": 90, "potential": 91},
+     {"forename": "Kyle", "surname": "Brady", "age": 27, "position": "TE", "rating": 82, "potential": 85},
+     {"forename": "Tony", "surname": "Boselli", "age": 27, "position": "OT", "rating": 97, "potential": 98},
+     {"forename": "Leon", "surname": "Searcy", "age": 30, "position": "OT", "rating": 92, "potential": 92},
+     {"forename": "Tony", "surname": "Brackens", "age": 25, "position": "DE", "rating": 92, "potential": 95},
+     {"forename": "Gary", "surname": "Walker", "age": 26, "position": "DT", "rating": 88, "potential": 91},
+     {"forename": "Kevin", "surname": "Hardy", "age": 26, "position": "OLB", "rating": 91, "potential": 94},
+     {"forename": "Aaron", "surname": "Beasley", "age": 24, "position": "CB", "rating": 87, "potential": 91},
+     {"forename": "Fernando", "surname": "Bryant", "age": 22, "position": "CB", "rating": 84, "potential": 90},
+     {"forename": "Donovin", "surname": "Darius", "age": 24, "position": "S", "rating": 88, "potential": 92},
+     {"forename": "Carnell", "surname": "Lake", "age": 32, "position": "S", "rating": 87, "potential": 87},
+     {"forename": "Mike", "surname": "Hollis", "age": 27, "position": "K", "rating": 85, "potential": 87}
+   ]
+ },
+ "Kansas City Chiefs": {
+   tag: "1969 Super Bowl IV champions",
+   file: "roster-chiefs-1969.json",
+   players: [
+     {"forename": "Len", "surname": "Dawson", "age": 34, "position": "QB", "rating": 94, "potential": 94},
+     {"forename": "Mike", "surname": "Garrett", "age": 27, "position": "RB", "rating": 87, "potential": 88},
+     {"forename": "Otis", "surname": "Taylor", "age": 27, "position": "WR", "rating": 91, "potential": 93},
+     {"forename": "Fred", "surname": "Arbanas", "age": 31, "position": "TE", "rating": 88, "potential": 88},
+     {"forename": "Jim", "surname": "Tyrer", "age": 30, "position": "OT", "rating": 93, "potential": 93},
+     {"forename": "Ed", "surname": "Budde", "age": 29, "position": "OG", "rating": 91, "potential": 91},
+     {"forename": "Buck", "surname": "Buchanan", "age": 29, "position": "DT", "rating": 96, "potential": 96},
+     {"forename": "Curley", "surname": "Culp", "age": 23, "position": "DT", "rating": 92, "potential": 96},
+     {"forename": "Willie", "surname": "Lanier", "age": 24, "position": "MLB", "rating": 98, "potential": 99},
+     {"forename": "Bobby", "surname": "Bell", "age": 29, "position": "OLB", "rating": 97, "potential": 97},
+     {"forename": "Emmitt", "surname": "Thomas", "age": 26, "position": "CB", "rating": 93, "potential": 95},
+     {"forename": "Johnny", "surname": "Robinson", "age": 31, "position": "S", "rating": 94, "potential": 94},
+     {"forename": "Jan", "surname": "Stenerud", "age": 27, "position": "K", "rating": 93, "potential": 95},
+     {"forename": "Jerrel", "surname": "Wilson", "age": 28, "position": "P", "rating": 84, "potential": 85}
+   ]
+ },
+ "Las Vegas Raiders": {
+   tag: "1983 Super Bowl XVIII champions",
+   file: "roster-raiders-1983.json",
+   players: [
+     {"forename": "Jim", "surname": "Plunkett", "age": 35, "position": "QB", "rating": 92, "potential": 92},
+     {"forename": "Marcus", "surname": "Allen", "age": 23, "position": "RB", "rating": 97, "potential": 99},
+     {"forename": "Cliff", "surname": "Branch", "age": 35, "position": "WR", "rating": 93, "potential": 93},
+     {"forename": "Todd", "surname": "Christensen", "age": 27, "position": "TE", "rating": 92, "potential": 95},
+     {"forename": "Art", "surname": "Shell", "age": 36, "position": "OT", "rating": 96, "potential": 96},
+     {"forename": "Gene", "surname": "Upshaw", "age": 38, "position": "OG", "rating": 95, "potential": 95},
+     {"forename": "Howie", "surname": "Long", "age": 23, "position": "DE", "rating": 97, "potential": 99},
+     {"forename": "Lyle", "surname": "Alzado", "age": 34, "position": "DE", "rating": 93, "potential": 93},
+     {"forename": "Ted", "surname": "Hendricks", "age": 35, "position": "OLB", "rating": 94, "potential": 94},
+     {"forename": "Matt", "surname": "Millen", "age": 25, "position": "MLB", "rating": 91, "potential": 95},
+     {"forename": "Mike", "surname": "Haynes", "age": 30, "position": "CB", "rating": 96, "potential": 96},
+     {"forename": "Lester", "surname": "Hayes", "age": 28, "position": "CB", "rating": 95, "potential": 95},
+     {"forename": "Ray", "surname": "Guy", "age": 33, "position": "P", "rating": 94, "potential": 94}
+   ]
+ },
+ "Los Angeles Chargers": {
+   tag: "1994 AFC champions",
+   file: "roster-chargers-1994.json",
+   players: [
+     {"forename": "Stan", "surname": "Humphries", "age": 29, "position": "QB", "rating": 89, "potential": 91},
+     {"forename": "Natrone", "surname": "Means", "age": 22, "position": "RB", "rating": 91, "potential": 95},
+     {"forename": "Tony", "surname": "Martin", "age": 29, "position": "WR", "rating": 88, "potential": 89},
+     {"forename": "Alfred", "surname": "Pupunu", "age": 26, "position": "TE", "rating": 82, "potential": 85},
+     {"forename": "Courtney", "surname": "Hall", "age": 25, "position": "C", "rating": 89, "potential": 93},
+     {"forename": "Leslie", "surname": "O'Neal", "age": 30, "position": "DE", "rating": 93, "potential": 93},
+     {"forename": "Junior", "surname": "Seau", "age": 25, "position": "MLB", "rating": 99, "potential": 99},
+     {"forename": "Darrien", "surname": "Gordon", "age": 24, "position": "CB", "rating": 87, "potential": 92},
+     {"forename": "Rodney", "surname": "Harrison", "age": 21, "position": "S", "rating": 89, "potential": 96},
+     {"forename": "John", "surname": "Carney", "age": 30, "position": "K", "rating": 87, "potential": 87},
+     {"forename": "Darren", "surname": "Bennett", "age": 29, "position": "P", "rating": 86, "potential": 88}
+   ]
+ },
+ "Los Angeles Rams": {
+   tag: "1999 Super Bowl XXXIV champions",
+   file: "roster-rams-1999.json",
+   players: [
+     {"forename": "Kurt", "surname": "Warner", "age": 28, "position": "QB", "rating": 97, "potential": 98},
+     {"forename": "Marshall", "surname": "Faulk", "age": 26, "position": "RB", "rating": 99, "potential": 99},
+     {"forename": "Isaac", "surname": "Bruce", "age": 27, "position": "WR", "rating": 95, "potential": 96},
+     {"forename": "Torry", "surname": "Holt", "age": 23, "position": "WR", "rating": 93, "potential": 98},
+     {"forename": "Orlando", "surname": "Pace", "age": 24, "position": "OT", "rating": 97, "potential": 99},
+     {"forename": "Adam", "surname": "Timmerman", "age": 28, "position": "OG", "rating": 89, "potential": 90},
+     {"forename": "Kevin", "surname": "Carter", "age": 26, "position": "DE", "rating": 92, "potential": 96},
+     {"forename": "Grant", "surname": "Wistrom", "age": 23, "position": "DE", "rating": 90, "potential": 95},
+     {"forename": "London", "surname": "Fletcher", "age": 24, "position": "MLB", "rating": 91, "potential": 96},
+     {"forename": "Todd", "surname": "Lyght", "age": 30, "position": "CB", "rating": 89, "potential": 89},
+     {"forename": "Jeff", "surname": "Wilkins", "age": 27, "position": "K", "rating": 87, "potential": 89}
+   ]
+ },
+ "Miami Dolphins": {
+   tag: "1972 perfect season",
+   file: "roster-dolphins-1972.json",
+   players: [
+     {"forename": "Bob", "surname": "Griese", "age": 27, "position": "QB", "rating": 94, "potential": 95},
+     {"forename": "Larry", "surname": "Csonka", "age": 25, "position": "RB", "rating": 97, "potential": 98},
+     {"forename": "Mercury", "surname": "Morris", "age": 25, "position": "RB", "rating": 89, "potential": 91},
+     {"forename": "Paul", "surname": "Warfield", "age": 29, "position": "WR", "rating": 95, "potential": 95},
+     {"forename": "Larry", "surname": "Little", "age": 26, "position": "OG", "rating": 96, "potential": 97},
+     {"forename": "Jim", "surname": "Langer", "age": 24, "position": "C", "rating": 95, "potential": 98},
+     {"forename": "Bill", "surname": "Stanfill", "age": 25, "position": "DE", "rating": 93, "potential": 95},
+     {"forename": "Nick", "surname": "Buoniconti", "age": 31, "position": "MLB", "rating": 97, "potential": 97},
+     {"forename": "Jake", "surname": "Scott", "age": 27, "position": "S", "rating": 94, "potential": 95},
+     {"forename": "Dick", "surname": "Anderson", "age": 26, "position": "S", "rating": 95, "potential": 96},
+     {"forename": "Garo", "surname": "Yepremian", "age": 28, "position": "K", "rating": 86, "potential": 86}
+   ]
+ },
+ "Minnesota Vikings": {
+   tag: "1998 NFC Championship run",
+   file: "roster-vikings-1998.json",
+   players: [
+     {"forename": "Randall", "surname": "Cunningham", "age": 35, "position": "QB", "rating": 94, "potential": 94},
+     {"forename": "Robert", "surname": "Smith", "age": 26, "position": "RB", "rating": 92, "potential": 94},
+     {"forename": "Randy", "surname": "Moss", "age": 21, "position": "WR", "rating": 99, "potential": 99},
+     {"forename": "Cris", "surname": "Carter", "age": 33, "position": "WR", "rating": 96, "potential": 96},
+     {"forename": "Randall", "surname": "McDaniel", "age": 33, "position": "OG", "rating": 96, "potential": 96},
+     {"forename": "John", "surname": "Randle", "age": 30, "position": "DT", "rating": 97, "potential": 97},
+     {"forename": "Cris", "surname": "Doleman", "age": 37, "position": "DE", "rating": 94, "potential": 94},
+     {"forename": "Ed", "surname": "McDaniel", "age": 29, "position": "MLB", "rating": 88, "potential": 88},
+     {"forename": "Robert", "surname": "Griffith", "age": 28, "position": "S", "rating": 88, "potential": 90},
+     {"forename": "Gary", "surname": "Anderson", "age": 39, "position": "K", "rating": 91, "potential": 91}
+   ]
+ },
+ "New England Patriots": {
+   tag: "2004 Super Bowl XXXIX champions",
+   file: "roster-patriots-2004.json",
+   players: [
+     {"forename": "Tom", "surname": "Brady", "age": 27, "position": "QB", "rating": 97, "potential": 99},
+     {"forename": "Corey", "surname": "Dillon", "age": 30, "position": "RB", "rating": 92, "potential": 92},
+     {"forename": "Deion", "surname": "Branch", "age": 25, "position": "WR", "rating": 88, "potential": 93},
+     {"forename": "Daniel", "surname": "Graham", "age": 25, "position": "TE", "rating": 86, "potential": 90},
+     {"forename": "Matt", "surname": "Light", "age": 26, "position": "OT", "rating": 90, "potential": 93},
+     {"forename": "Dan", "surname": "Koppen", "age": 25, "position": "C", "rating": 89, "potential": 93},
+     {"forename": "Richard", "surname": "Seymour", "age": 25, "position": "DE", "rating": 96, "potential": 98},
+     {"forename": "Vince", "surname": "Wilfork", "age": 23, "position": "DT", "rating": 91, "potential": 97},
+     {"forename": "Tedy", "surname": "Bruschi", "age": 31, "position": "MLB", "rating": 94, "potential": 94},
+     {"forename": "Mike", "surname": "Vrabel", "age": 29, "position": "OLB", "rating": 91, "potential": 92},
+     {"forename": "Ty", "surname": "Law", "age": 30, "position": "CB", "rating": 95, "potential": 95},
+     {"forename": "Rodney", "surname": "Harrison", "age": 32, "position": "S", "rating": 93, "potential": 93},
+     {"forename": "Adam", "surname": "Vinatieri", "age": 31, "position": "K", "rating": 93, "potential": 93}
+   ]
+ },
+ "New Orleans Saints": {
+   tag: "2009 Super Bowl XLIV champions",
+   file: "roster-saints-2009.json",
+   players: [
+     {"forename": "Drew", "surname": "Brees", "age": 30, "position": "QB", "rating": 98, "potential": 98},
+     {"forename": "Pierre", "surname": "Thomas", "age": 24, "position": "RB", "rating": 88, "potential": 91},
+     {"forename": "Reggie", "surname": "Bush", "age": 24, "position": "RB", "rating": 86, "potential": 89},
+     {"forename": "Marques", "surname": "Colston", "age": 26, "position": "WR", "rating": 92, "potential": 94},
+     {"forename": "Jahri", "surname": "Evans", "age": 26, "position": "OG", "rating": 94, "potential": 96},
+     {"forename": "Carl", "surname": "Nicks", "age": 24, "position": "OG", "rating": 91, "potential": 95},
+     {"forename": "Will", "surname": "Smith", "age": 28, "position": "DE", "rating": 89, "potential": 90},
+     {"forename": "Jonathan", "surname": "Vilma", "age": 27, "position": "MLB", "rating": 93, "potential": 94},
+     {"forename": "Jabari", "surname": "Greer", "age": 27, "position": "CB", "rating": 89, "potential": 90},
+     {"forename": "Darren", "surname": "Sharper", "age": 34, "position": "S", "rating": 92, "potential": 92}
+   ]
+ },
+ "New York Giants": {
+   tag: "2007 Super Bowl XLII champions",
+   file: "roster-giants-2007.json",
+   players: [
+     {"forename": "Eli", "surname": "Manning", "age": 26, "position": "QB", "rating": 92, "potential": 95},
+     {"forename": "Brandon", "surname": "Jacobs", "age": 25, "position": "RB", "rating": 89, "potential": 92},
+     {"forename": "Plaxico", "surname": "Burress", "age": 30, "position": "WR", "rating": 92, "potential": 92},
+     {"forename": "Chris", "surname": "Snee", "age": 25, "position": "OG", "rating": 91, "potential": 95},
+     {"forename": "Michael", "surname": "Strahan", "age": 36, "position": "DE", "rating": 97, "potential": 97},
+     {"forename": "Osi", "surname": "Umenyiora", "age": 26, "position": "DE", "rating": 94, "potential": 96},
+     {"forename": "Justin", "surname": "Tuck", "age": 24, "position": "DE", "rating": 92, "potential": 96},
+     {"forename": "Antonio", "surname": "Pierce", "age": 29, "position": "MLB", "rating": 92, "potential": 93},
+     {"forename": "Sam", "surname": "Madison", "age": 33, "position": "CB", "rating": 88, "potential": 88}
+   ]
+ },
+ "New York Jets": {
+   tag: "1968 Super Bowl III champions",
+   file: "roster-jets-1968.json",
+   players: [
+     {"forename": "Joe", "surname": "Namath", "age": 25, "position": "QB", "rating": 97, "potential": 99},
+     {"forename": "Matt", "surname": "Snell", "age": 26, "position": "RB", "rating": 91, "potential": 92},
+     {"forename": "Don", "surname": "Maynard", "age": 33, "position": "WR", "rating": 95, "potential": 95},
+     {"forename": "Winston", "surname": "Hill", "age": 27, "position": "OT", "rating": 94, "potential": 96},
+     {"forename": "Gerry", "surname": "Philbin", "age": 27, "position": "DE", "rating": 93, "potential": 94},
+     {"forename": "Larry", "surname": "Grantham", "age": 30, "position": "OLB", "rating": 94, "potential": 94},
+     {"forename": "Johnny", "surname": "Sample", "age": 31, "position": "CB", "rating": 88, "potential": 88}
+   ]
+ },
+ "Philadelphia Eagles": {
+   tag: "2017 Super Bowl LII champions",
+   file: "roster-eagles-2017.json",
+   players: [
+     {"forename": "Carson", "surname": "Wentz", "age": 24, "position": "QB", "rating": 92, "potential": 96},
+     {"forename": "LeGarrette", "surname": "Blount", "age": 30, "position": "RB", "rating": 86, "potential": 86},
+     {"forename": "Alshon", "surname": "Jeffery", "age": 27, "position": "WR", "rating": 89, "potential": 90},
+     {"forename": "Zach", "surname": "Ertz", "age": 27, "position": "TE", "rating": 92, "potential": 94},
+     {"forename": "Jason", "surname": "Peters", "age": 35, "position": "OT", "rating": 94, "potential": 94},
+     {"forename": "Lane", "surname": "Johnson", "age": 27, "position": "OT", "rating": 93, "potential": 95},
+     {"forename": "Jason", "surname": "Kelce", "age": 30, "position": "C", "rating": 92, "potential": 93},
+     {"forename": "Fletcher", "surname": "Cox", "age": 26, "position": "DT", "rating": 96, "potential": 98},
+     {"forename": "Brandon", "surname": "Graham", "age": 29, "position": "DE", "rating": 92, "potential": 93},
+     {"forename": "Nigel", "surname": "Bradham", "age": 28, "position": "OLB", "rating": 89, "potential": 90},
+     {"forename": "Malcolm", "surname": "Jenkins", "age": 29, "position": "S", "rating": 93, "potential": 94},
+     {"forename": "Jake", "surname": "Elliott", "age": 22, "position": "K", "rating": 87, "potential": 93}
+   ]
+ },
+ "Pittsburgh Steelers": {
+   tag: "1978 Super Bowl XIII champions",
+   file: "roster-steelers-1978.json",
+   players: [
+     {"forename": "Terry", "surname": "Bradshaw", "age": 30, "position": "QB", "rating": 96, "potential": 97},
+     {"forename": "Franco", "surname": "Harris", "age": 28, "position": "RB", "rating": 95, "potential": 96},
+     {"forename": "Lynn", "surname": "Swann", "age": 26, "position": "WR", "rating": 95, "potential": 97},
+     {"forename": "John", "surname": "Stallworth", "age": 26, "position": "WR", "rating": 93, "potential": 96},
+     {"forename": "Mike", "surname": "Webster", "age": 26, "position": "C", "rating": 97, "potential": 99},
+     {"forename": "Mean Joe", "surname": "Greene", "age": 32, "position": "DT", "rating": 99, "potential": 99},
+     {"forename": "L.C.", "surname": "Greenwood", "age": 32, "position": "DE", "rating": 95, "potential": 95},
+     {"forename": "Jack", "surname": "Lambert", "age": 26, "position": "MLB", "rating": 99, "potential": 99},
+     {"forename": "Jack", "surname": "Ham", "age": 30, "position": "OLB", "rating": 97, "potential": 97},
+     {"forename": "Mel", "surname": "Blount", "age": 30, "position": "CB", "rating": 97, "potential": 97},
+     {"forename": "Donnie", "surname": "Shell", "age": 26, "position": "S", "rating": 93, "potential": 96}
+   ]
+ },
+ "San Francisco 49ers": {
+   tag: "1989 Super Bowl XXIV champions",
+   file: "roster-49ers-1989.json",
+   players: [
+     {"forename": "Joe", "surname": "Montana", "age": 33, "position": "QB", "rating": 99, "potential": 99},
+     {"forename": "Roger", "surname": "Craig", "age": 29, "position": "RB", "rating": 93, "potential": 93},
+     {"forename": "Jerry", "surname": "Rice", "age": 27, "position": "WR", "rating": 99, "potential": 99},
+     {"forename": "Brent", "surname": "Jones", "age": 26, "position": "TE", "rating": 87, "potential": 92},
+     {"forename": "Jesse", "surname": "Sapolu", "age": 28, "position": "OG", "rating": 92, "potential": 94},
+     {"forename": "Charles", "surname": "Haley", "age": 25, "position": "DE", "rating": 94, "potential": 97},
+     {"forename": "Ronnie", "surname": "Lott", "age": 30, "position": "CB", "rating": 98, "potential": 98}
+   ]
+ },
+ "Seattle Seahawks": {
+   tag: "2013 Super Bowl XLVIII champions",
+   file: "roster-seahawks-2013.json",
+   players: [
+     {"forename": "Russell", "surname": "Wilson", "age": 25, "position": "QB", "rating": 92, "potential": 96},
+     {"forename": "Marshawn", "surname": "Lynch", "age": 27, "position": "RB", "rating": 95, "potential": 96},
+     {"forename": "Doug", "surname": "Baldwin", "age": 25, "position": "WR", "rating": 88, "potential": 92},
+     {"forename": "Russell", "surname": "Okung", "age": 26, "position": "OT", "rating": 90, "potential": 93},
+     {"forename": "Max", "surname": "Unger", "age": 27, "position": "C", "rating": 89, "potential": 91},
+     {"forename": "Michael", "surname": "Bennett", "age": 28, "position": "DE", "rating": 93, "potential": 94},
+     {"forename": "Bobby", "surname": "Wagner", "age": 23, "position": "MLB", "rating": 95, "potential": 99},
+     {"forename": "Richard", "surname": "Sherman", "age": 25, "position": "CB", "rating": 98, "potential": 99},
+     {"forename": "Earl", "surname": "Thomas", "age": 24, "position": "S", "rating": 97, "potential": 99},
+     {"forename": "Kam", "surname": "Chancellor", "age": 25, "position": "S", "rating": 95, "potential": 97}
+   ]
+ },
+ "Tampa Bay Buccaneers": {
+   tag: "2002 Super Bowl XXXVII champions",
+   file: "roster-buccaneers-2002.json",
+   players: [
+     {"forename": "Brad", "surname": "Johnson", "age": 34, "position": "QB", "rating": 89, "potential": 89},
+     {"forename": "Mike", "surname": "Alstott", "age": 28, "position": "RB", "rating": 88, "potential": 89},
+     {"forename": "Keyshawn", "surname": "Johnson", "age": 30, "position": "WR", "rating": 92, "potential": 92},
+     {"forename": "Roman", "surname": "Oben", "age": 30, "position": "OT", "rating": 87, "potential": 87},
+     {"forename": "Simeon", "surname": "Rice", "age": 28, "position": "DE", "rating": 95, "potential": 96},
+     {"forename": "Warren", "surname": "Sapp", "age": 30, "position": "DT", "rating": 97, "potential": 97},
+     {"forename": "Derrick", "surname": "Brooks", "age": 29, "position": "OLB", "rating": 98, "potential": 99},
+     {"forename": "Ronde", "surname": "Barber", "age": 27, "position": "CB", "rating": 96, "potential": 98},
+     {"forename": "John", "surname": "Lynch", "age": 31, "position": "S", "rating": 96, "potential": 96}
+   ]
+ },
+ "Tennessee Titans": {
+   tag: "1999 AFC champions",
+   file: "roster-titans-1999.json",
+   players: [
+     {"forename": "Steve", "surname": "McNair", "age": 26, "position": "QB", "rating": 94, "potential": 96},
+     {"forename": "Eddie", "surname": "George", "age": 26, "position": "RB", "rating": 96, "potential": 97},
+     {"forename": "Frank", "surname": "Wycheck", "age": 28, "position": "TE", "rating": 89, "potential": 90},
+     {"forename": "Bruce", "surname": "Matthews", "age": 38, "position": "C", "rating": 96, "potential": 96},
+     {"forename": "Jevon", "surname": "Kearse", "age": 23, "position": "DE", "rating": 96, "potential": 99},
+     {"forename": "Samari", "surname": "Rolle", "age": 23, "position": "CB", "rating": 93, "potential": 96},
+     {"forename": "Blaine", "surname": "Bishop", "age": 29, "position": "S", "rating": 92, "potential": 93}
+   ]
+ },
+ "Washington Commanders": {
+   tag: "1982 Super Bowl XVII champions",
+   file: "roster-commanders-1982.json",
+   players: [
+     {"forename": "Joe", "surname": "Theismann", "age": 33, "position": "QB", "rating": 92, "potential": 92},
+     {"forename": "John", "surname": "Riggins", "age": 34, "position": "RB", "rating": 97, "potential": 97},
+     {"forename": "Art", "surname": "Monk", "age": 25, "position": "WR", "rating": 93, "potential": 96},
+     {"forename": "Joe", "surname": "Jacoby", "age": 24, "position": "OT", "rating": 95, "potential": 98},
+     {"forename": "Russ", "surname": "Grimm", "age": 23, "position": "OG", "rating": 94, "potential": 98},
+     {"forename": "Dave", "surname": "Butz", "age": 32, "position": "DT", "rating": 94, "potential": 94},
+     {"forename": "Darrell", "surname": "Green", "age": 22, "position": "CB", "rating": 98, "potential": 99}
+   ]
+ }
+};
+var FN=["Jalen","Marcus","Devin","Tyrone","Caleb","Isaiah","Mason","Elijah","Trevor","Brandon","Darius","Cole","Landon","Xavier","Jordan","Terrell","Micah","Andre","Colton","Rashad","Gavin","Dante","Tyler","Kendrick"];
+var LN=["Johnson","Williams","Carter","Brooks","Hayes","Mitchell","Jefferson","Coleman","Reed","Bennett","Foster","Powell","Sanders","Ward","Price","Hughes","Barnes","Fields","Thompson","Gaines","Dixon","Pierce","Holloway","Whitaker","Boyd","Ramsey","Lawson","Monroe"];
+var CI=["Arizona","Atlanta","Baltimore","Buffalo","Carolina","Chicago","Cincinnati","Cleveland","Dallas","Denver","Detroit","Green Bay","Houston","Indianapolis","Jacksonville","Kansas City","Las Vegas","Los Angeles","Los Angeles","Miami","Minnesota","New England","New Orleans","New York","New York","Philadelphia","Pittsburgh","San Francisco","Seattle","Tampa Bay","Tennessee","Washington"];
+var NK=["Cardinals","Falcons","Ravens","Bills","Panthers","Bears","Bengals","Browns","Cowboys","Broncos","Lions","Packers","Texans","Colts","Jaguars","Chiefs","Raiders","Chargers","Rams","Dolphins","Vikings","Patriots","Saints","Giants","Jets","Eagles","Steelers","49ers","Seahawks","Buccaneers","Titans","Commanders"];
+var POS=[["QB",3],["RB",4],["WR",6],["TE",3],["OL",9],["DL",9],["LB",7],["CB",5],["S",4],["K",1],["P",1],["LS",1]],PI={};POS.forEach(function(g,i){PI[g[0]]=i});
+var U={QB:[1,.04],RB:[.6,.3,.12,.05],WR:[1,.85,.65,.3,.1,.05],TE:[1,.4,.1],OL:[1,1,1,1,1,.4,.2,.1,.05],DL:[1,.95,.9,.8,.4,.3,.15,.1,.05],LB:[1,.95,.8,.5,.3,.15,.1],CB:[1,.95,.75,.35,.15],S:[1,.9,.45,.15],K:[1],P:[1],LS:[0]};
+var SW={QB:[3.2],RB:[.8],WR:[.7,.6,.5],TE:[.5],OL:[.7,.7,.7,.7,.7],DL:[.9,.8,.8,.7],LB:[.6,.5,.5],CB:[.7,.6,.5],S:[.6,.5],K:[.4],P:[.2]},SWS=0;
+for(var k in SW)SW[k].forEach(function(w){SWS+=w});
+var PV={QB:6,RB:0,WR:2,TE:0,OL:1,DL:2,LB:0,CB:1,S:0,K:-14,P:-16,LS:-30};
+var ST=[["py","Pass yards","pass yds"],["pt","Pass TD","pass TD"],["pi","Interceptions thrown","INT thrown"],["ry","Rush yards","rush yds"],["rt","Rush TD","rush TD"],["rc","Receptions","rec"],["rv","Receiving yards","rec yds"],["rtd","Receiving TD","rec TD"],["sk","Sacks","sacks"],["tk","Tackles","tackles"],["di","Interceptions","INT"],["fg","Field goals","FG"]];
+var TABS=[["teams","Teams"],["lead","Leaders"],["top","Top 100"],["pls","Players"],["new","Create player"],["hof","Hall of Fame"],["log","Season log"]];
+var HOFT=180,S,tab="teams",sc="s",st="py",cf="all",ed=null,sel=null,pl=null,q="";
+function rnd(a,b){return a+Math.floor(Math.random()*(b-a+1))}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function fmt(v){return(+v).toLocaleString()}
+function T(i){return CI[i]+" "+NK[i]}function Tn(i){return i>=0?NK[i]:"Retired"}
+function hf(p){return Math.round(p.av+p.t10*5+p.mvp*12+p.rg*3)}
+function fp(id){var a=S.p.concat(S.ret);for(var i=0;i<a.length;i++)if(a[i].id===id)return a[i]}
+function sline(s){return ST.filter(function(x){return s[x[0]]}).map(function(x){return fmt(s[x[0]])+" "+x[2]}).join(", ")}
+function mk(pos,d,t,rk,legendName,legendOvr,legendPot,legendAge){var age=legendAge||(rk?rnd(21,23):rnd(21,36));
+ var o=legendOvr?clamp(legendOvr+rnd(-1,1),50,99):(rk?52+rnd(0,22):clamp(Math.round(78-d*3.4+rnd(-9,9)+(age<24?-4:0)),42,96));
+ var name=legendName||(FN[rnd(0,FN.length-1)]+" "+LN[rnd(0,LN.length-1)]);
+ var pot=legendPot||clamp(o+(rk?rnd(2,16):age<27?rnd(0,10):0),o,99);
+ return{id:S.nid++,n:name,pos:pos,age:age,ovr:o,pot:pot,t:t,s:{},c:{},L:[],av:0,t10:0,mvp:0,rg:0}}
+function fresh(){
+ S={season:1,nid:1,p:[],ret:[],hof:[],tm:[],top:[],log:[],champ:"",rec:{},played:0,prev:{}};
+ for(var t=0;t<32;t++){S.tm.push({w:0,l:0,c:0});
+   var fullName=T(t);
+   var roster=ROSTERS[fullName];
+   if(!roster){
+     POS.forEach(function(g){for(var i=0;i<g[1];i++)S.p.push(mk(g[0],i,t))});
+     continue;
+   }
+   roster.players.forEach(function(lp){
+     var p=mk(lp.position,0,t,false,lp.forename+" "+lp.surname,lp.rating,lp.potential,lp.age);
+     S.p.push(p);
+   });
+   var cnt={};
+   S.p.filter(function(p){return p.t===t}).forEach(function(p){cnt[p.pos]=(cnt[p.pos]||0)+1});
+   POS.forEach(function(g){
+     var need=g[1]-(cnt[g[0]]||0);
+     for(var i=0;i<need;i++) S.p.push(mk(g[0],i,t));
+   });
+ }
+}
+function load(){try{var r=localStorage.getItem("gdyn_unified_1");if(r){S=JSON.parse(r);if(S&&S.p)return}}catch(e){}fresh()}
+function save(){try{localStorage.setItem("gdyn_unified_1",JSON.stringify(S))}catch(e){}}
+function gstat(p,u){var f=p.ovr/80,g=f*f,s={};function z(x){return Math.round(x*u*(.8+Math.random()*.4))}function h(x){return Math.round(x*u*(.7+Math.random()*.6)*2)/2}
+ switch(p.pos){case"QB":s.py=z(4300*g);s.pt=z(29*g);s.pi=z(12/g);s.ry=z(260*f);s.rt=z(3.5*g);break;
+ case"RB":s.ry=z(1700*g);s.rt=z(13*g);s.rc=z(35*f);s.rv=z(260*f);s.rtd=z(1.5*f);break;
+ case"WR":s.rc=z(85*f);s.rv=z(1150*g);s.rtd=z(8*g);break;
+ case"TE":s.rc=z(62*f);s.rv=z(720*g);s.rtd=z(5.5*g);break;
+ case"DL":s.sk=h(10*g);s.tk=z(48*f);break;
+ case"LB":case"MLB":case"OLB":s.tk=z(115*f);s.sk=h(5*g);s.di=z(1.6*f);break;
+ case"CB":s.di=z(3.8*g);s.tk=z(58*f);break;
+ case"S":s.di=z(3.2*g);s.tk=z(78*f);break;
+ case"K":s.fg=z(30*g)}
+ return s}
+function avf(p,s,u){var x=0;switch(p.pos){case"QB":x=s.py/400+s.pt*.6-s.pi*.5+s.ry/200;break;case"RB":x=s.ry/150+s.rt*.6+s.rv/150;break;case"WR":case"TE":x=s.rv/100+s.rtd*.6;break;case"DL":case"DE":case"DT":x=s.sk*1.2+s.tk/25;break;case"LB":case"MLB":case"OLB":x=s.tk/18+s.sk+s.di*2;break;case"CB":x=s.di*2.5+s.tk/20;break;case"S":x=s.di*2.5+s.tk/22;break;case"K":x=s.fg/3;break;case"P":x=5*u;break;case"OL":case"OT":case"OG":case"C":x=u*(p.ovr-45)/4.5}return Math.max(0,x)}
+function win(a,b,str){return Math.random()<1/(1+Math.exp((str[b]-str[a])/3))}
+function play(){
+ var N=32,by=[],str=[],i,g,k,pos,yr=S.season;
+ for(i=0;i<N;i++){by.push({});S.tm[i]={w:0,l:0,c:0}}
+ S.p.forEach(function(p){(by[p.t][p.pos]=by[p.t][p.pos]||[]).push(p)});
+ for(i=0;i<N;i++){var tot=0;for(pos in by[i])by[i][pos].sort(function(a,b){return b.ovr-a.ovr});
+  for(pos in SW)SW[pos].forEach(function(w,j){var x=by[i][pos]&&by[i][pos][j];tot+=w*(x?x.ovr:40)});str[i]=tot/SWS}
+ for(g=0;g<17;g++){var o=[];for(i=0;i<N;i++)o.push(i);o.sort(function(){return Math.random()-.5});
+  for(k=0;k<N;k+=2){var a=o[k],b=o[k+1],aw=win(a,b,str);S.tm[aw?a:b].w++;S.tm[aw?b:a].l++}}
+ var sd=[],rk={};for(i=0;i<N;i++)sd.push(i);sd.sort(function(a,b){return S.tm[b].w-S.tm[a].w||str[b]-str[a]});
+ sd.forEach(function(t,j){rk[t]=j;S.tm[t].po=j<16});
+ var f=sd.slice(0,16);while(f.length>1){var nx=[],n=f.length;for(k=0;k<n/2;k++){var a=f[k],b=f[n-1-k];nx.push(win(a,b,str)?a:b)}f=nx.sort(function(a,b){return rk[a]-rk[b]})}
+ var ch=f[0];S.tm[ch].c=1;
+ var all=[];
+ for(i=0;i<N;i++)for(pos in by[i])by[i][pos].forEach(function(p,d){var u=(U[p.pos]||[])[d]||0,s=gstat(p,u),a=avf(p,s,u);p.s=s;for(var key in s)p.c[key]=(p.c[key]||0)+s[key];p.av+=a;if(p.t===ch)p.rg++;p.L.push({y:yr,t:p.t,o:p.ovr,s:s,a:Math.round(a)});p.sc=p.ovr+(PV[p.pos]||0)+Math.min(8,a/3);all.push(p)});
+ all.sort(function(a,b){return b.sc-a.sc});
+ var np={};all.slice(0,100).forEach(function(p,j){np[p.id]=j+1;if(j<10)p.t10++;if(j===0)p.mvp++});
+ S.top=all.slice(0,100).map(function(p){return{id:p.id,n:p.n,pos:p.pos,t:p.t,age:p.age,o:p.ovr,sc:Math.round(p.sc*10)/10,pv:S.prev[p.id]||0}});S.prev=np;
+ ST.forEach(function(x){var kk=x[0],c=S.p.filter(function(p){return p.s[kk]>0}).sort(function(a,b){return b.s[kk]-a.s[kk]}).slice(0,10).map(function(p){return{n:p.n,pos:p.pos,t:p.t,y:yr,v:p.s[kk]}});S.rec[kk]=(S.rec[kk]||[]).concat(c).sort(function(a,b){return b.v-a.v}).slice(0,10)});
+ var lines=[],hofs=[],nret=0,keep=[],best=all[0];
+ S.p.forEach(function(p){var a=p.age,d;if(a<=25)d=rnd(0,1+Math.ceil((p.pot-p.ovr)/4));else if(a<=29)d=rnd(-1,1);else if(a<=33)d=-rnd(0,2);else d=-rnd(1,3);
+  p.ovr=clamp(p.ovr+d,35,d>0?Math.max(p.pot,p.ovr):99);p.age=a+1;a=p.age;
+  var c=a>=40?1:a===39?.75:a===38?.55:a===37?.35:0;
+  if(Math.random()<c){nret++;p.ry=yr;p.lt=p.t;p.t=-1;var ind=hf(p)>=HOFT&&!p.inh;if(ind){p.inh=1;S.hof.push(p);hofs.push(esc(p.n))}S.ret.push(p);
+   if((p.ovr>=72||ind)&&lines.length<25)lines.push(esc(p.n)+" ("+p.pos+", "+NK[p.lt]+") retired at "+a+(ind?' <span class="up">and was inducted into the Hall of Fame</span>':"")+".")}else keep.push(p)});
+ S.p=keep;
+ var cnt={},nr=0;S.p.filter(function(p){return p.t===t}).forEach(function(p){cnt[p.pos]=(cnt[p.pos]||0)+1});
+ for(i=0;i<N;i++)POS.forEach(function(g){for(var j=cnt[i+g[0]]||0;j<g[1];j++){S.p.push(mk(g[0],j,i,1));nr++}});
+ S.log.unshift({y:yr,ch:T(ch),rec:S.tm[ch].w+"-"+S.tm[ch].l,mvp:best.n+" ("+best.pos+","+NK[best.t]+")",lines:lines,hofs:hofs,nret:nret,nr:nr});
+ S.champ=NK[ch];S.played=yr;S.season++;save();render()}
+function tbl(h,r){return'<div class="scroll"><table><tr>'+h.map(function(x){return'<th>'+x+'</th>'}).join('')+'</tr>'+r.map(function(x){return'<tr>'+x.map(function(c){return'<td>'+c+'</td>'}).join('')+'</tr>'}).join('')+'</table></div>'}
+function btn(a,v,t){return'<button class="lnk" data-a="'+a+'" data-v="'+v+'">'+t+'</button>'}
+function pbtn(p){return btn('pl',p.id,esc(p.n))}
+function chips(list,cur,a){return'<div style="margin-bottom:12px;display:flex;gap:6px;flex-wrap:wrap">'+list.map(function(x){return'<button class="btn'+(cur===x[0]?'':' alt')+'" data-a="'+a+'" data-v="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div>'}
+function teamsV(){
+ if(sel===null){var o=S.tm.map(function(x,i){return i}).sort(function(a,b){return S.tm[b].w-S.tm[a].w});
+  var legendBadge = function(t){var roster=ROSTERS[T(t)];return roster?' <span class="badge">★ '+esc(roster.tag)+' ('+roster.file+')</span>':''};
+  return(S.played?'<p class="mu">Season '+S.played+' standings. Click a team for its legendary roster file.</p>':'<p class="mu">Click a team to inspect its Hall of Fame roster using the unified rating system.</p>')+tbl(['Team','W','L','Result'],o.map(function(i){var x=S.tm[i];return[btn('team',i,T(i))+legendBadge(i),x.w,x.l,x.c?'<b>Champion</b>':x.po?'Playoffs':'']}))}
+ var ros=S.p.filter(function(p){return p.t===sel}).sort(function(a,b){return PI[a.pos]-PI[b.pos]||b.ovr-a.ovr});
+ var roster=ROSTERS[T(sel)];
+ return'<p>'+btn('back','','← All teams')+'</p><h3>'+T(sel)+(roster?' <span class="badge">★ '+esc(roster.tag)+' ('+roster.file+')</span>':'')+' ('+ros.length+' players)</h3>'+tbl(['Pos','Name','Age','Rating','Potential','Last season'],ros.map(function(p){return[p.pos,pbtn(p),p.age,p.ovr,p.pot,sline(p.s)]}))}
+function leadV(){
+ var h=chips([["s","This season"],["c","Career (all-time)"],["r","Single-season records"]],sc,"sc")+(sc==="c"?chips([["all","All players"],["act","Active only"],["ret","Retired only"]],cf,"cf"):"")+chips(ST.map(function(x){return[x[0],x[1]]}),st,"st"),lab=ST.filter(function(x){return x[0]===st})[0][1],hd,rows;
+ if(sc==="r"){hd=["#","Player","Pos","Year","Team",lab];rows=(S.rec[st]||[]).map(function(r,i){return[i+1,esc(r.n),r.pos,"Season "+r.y,Tn(r.t),fmt(r.v)]})}
+ else if(sc==="s"){hd=["#","Player","Pos","Team","Age",lab];rows=S.p.filter(function(p){return p.s[st]>0}).sort(function(a,b){return b.s[st]-a.s[st]}).slice(0,15).map(function(p,i){return[i+1,pbtn(p),p.pos,Tn(p.t),p.age,fmt(p.s[st])]})}
+ else{hd=["#","Player","Pos","Status","Age",lab+" (career)"];rows=(cf==="act"?S.p:cf==="ret"?S.ret:S.p.concat(S.ret)).filter(function(p){return p.c[st]>0}).sort(function(a,b){return b.c[st]-a.c[st]}).slice(0,15).map(function(p,i){return[i+1,pbtn(p),p.pos,p.t>=0?Tn(p.t):p.inh?"Hall of Fame":"Retired",p.age,fmt(p.c[st])]})}
+ return h+(rows.length?tbl(hd,rows):'<div class="empty">Play a season to see stats.</div>')}
+function topV(){if(!S.top.length)return'<div class="empty">Play a season to see the top 100 players.</div>';
+ return'<p class="mu">Rank is unified rating plus position value plus simulation performance.</p>'+tbl(["#","Player","Pos","Team","Age","Rating","Score","Move"],S.top.map(function(p,i){var m=S.played<2?"—":p.pv?(p.pv>i+1?'<span class="up">▲'+(p.pv-i-1)+'</span>':p.pv<i+1?'<span class="dn">▼'+(i+1-p.pv)+'</span>':"—"):"New";return[i+1,btn("pl",p.id,esc(p.n)),p.pos,Tn(p.t),p.age,p.o,p.sc,m]}))}
+function res(){var s=q.toLowerCase().trim(),l=S.p.concat(S.ret).filter(function(p){return!s||(p.n+" "+p.pos+" "+(p.t>=0?T(p.t):"retired")).toLowerCase().indexOf(s)>=0}).sort(function(a,b){return b.ovr-a.ovr}).slice(0,30);
+ return tbl(["Name","Pos","Team","Age","Rating","Career AV"],l.map(function(p){return[pbtn(p),p.pos,p.t>=0?Tn(p.t):"Retired",p.age,p.ovr,Math.round(p.av)]}))}
+function plsV(){return'<input id="q" placeholder="Search by name, position or team" value="'+esc(q)+'" style="width:100%;margin-bottom:12px"><div id="res">'+res()+'</div>'}
+function plV(){var p=fp(pl);if(!p)return"";
+ return'<p>'+btn("back","","← Back")+' '+btn("edit",p.id,"Edit player")+'</p><h3>'+esc(p.n)+", "+p.pos+'</h3><p class="mu">'+(p.t>=0?T(p.t):p.inh?"Retired, Hall of Fame":"Retired")+", age "+p.age+", rating "+p.ovr+", Hall of Fame points "+hf(p)+'</p><p><b>Career:</b> '+(sline(p.c)||"No stats yet")+'</p>'+(p.L.length?tbl(["Season","Team","Rating","AV","Stats"],p.L.slice().reverse().map(function(l){return["Season "+l.y,Tn(l.t),l.o,l.a,sline(l.s)]})):'<div class="empty">No seasons played yet.</div>')}
+function hofV(){var ap=S.p.concat(S.ret).map(function(p){return[p,hf(p)]}).filter(function(r){return r[1]>0}).sort(function(a,b){return b[1]-a[1]}).slice(0,15);
+ return'<p class="mu">Retired players enter the Hall of Fame with '+HOFT+' points: career approximate value, plus 5 per top-10 season, 12 per #1 season and 3 per championship.</p>'+
+ (S.hof.length?'<h3>Inductees</h3>'+tbl(["Name","Pos","Class","Seasons","Career AV","Top 10s","#1 seasons","Rings","Points"],S.hof.slice().reverse().map(function(p){return[pbtn(p),p.pos,"Season "+p.ry,p.L.length,Math.round(p.av),p.t10,p.mvp,p.rg,hf(p)]})):'<div class="empty">No inductees yet. Players are inducted when they retire.</div>')+
+ '<h3>Hall of Fame points leaders</h3>'+(ap.length?tbl(["#","Player","Pos","Status","Points"],ap.map(function(r,i){var p=r[0];return[i+1,pbtn(p),p.pos,p.t>=0?Tn(p.t):p.inh?"Hall of Fame":"Retired",r[1]]})):'<div class="empty">No points yet.</div>')}
+function logV(){return S.log.length?S.log.map(function(e){return'<h3>Season '+e.y+'</h3><p><b>Champion:</b> '+e.ch+' ('+e.rec+'). <b>Best player:</b> '+esc(e.mvp)+'.</p><p class="mu">'+e.nret+' players retired and '+e.nr+' rookies joined.'+(e.hofs.length?' Hall of Fame class: '+e.hofs.join(", ")+'.':'')+'</p><ul>'+e.lines.map(function(l){return'<li>'+l+'</li>'}).join('')+'</ul>'}).join(''):'<div class="empty">Play a season to start the history book.</div>'}
+function formV(p){var n=p?p.n:"",pos=p?p.pos:"QB",age=p?p.age:22,o=p?p.ovr:65,pt=p?p.pot:75,t=p?p.t:0,np=!p;
+ function opt(v,l,s2){return'<option value="'+v+'"'+(s2?' selected':'')+'>'+l+'</option>'}
+ function fld(l,c){return'<label style="display:flex;flex-direction:column;font-size:13px;color:var(--mu);gap:4px">'+l+c+'</label>'}
+ return'<h3>'+(np?'Create player':'Edit '+esc(p.n))+'</h3><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px">'+
+ fld('Name','<input id="fn" value="'+esc(n)+'" maxlength="40">')+
+ fld('Position','<select id="fp">'+POS.map(function(g){return opt(g[0],g[0],g[0]===pos)}).join('')+'</select>')+
+ (np||t>=0?fld('Team','<select id="ft">'+CI.map(function(c,i){return opt(i,T(i),i===t)}).join('')+'</select>'):'')+
+ fld('Age','<input id="fa" type="number" min="18" max="45" value="'+age+'">')+
+ fld('Rating','<input id="fo" type="number" min="35" max="99" value="'+o+'">')+
+ fld('Potential','<input id="fq" type="number" min="35" max="99" value="'+pt+'">')+
+ '</div><p style="margin-top:16px"><button class="btn go" data-a="savep">'+(np?'Create and sign player':'Save changes')+'</button>'+(np?'':'<button class="btn alt" data-a="cancel">Cancel</button>')+'</p>'}
+function savep(){var g=function(i){return document.getElementById(i)},p=ed==="new"?null:fp(ed),o=clamp(+g("fo").value||60,35,99);
+ if(!p){p=mk(g("fp").value,0,+g("ft").value);S.p.push(p)}
+ p.n=g("fn").value.trim()||"Player";p.pos=g("fp").value;p.age=clamp(+g("fa").value||25,18,45);p.ovr=o;p.pot=clamp(Math.max(+g("fq").value||o,o),o,99);
+ if(p.t>=0&&g("ft"))p.t=+g("ft").value;
+ pl=p.id;ed=null;save();render()}
+function render(){
+ document.getElementById("a").textContent=S.season;document.getElementById("b").textContent=fmt(S.p.length);document.getElementById("c").textContent=S.champ||"—";document.getElementById("d").textContent=S.hof.length;
+ document.getElementById("play").textContent="Play season "+S.season;
+ document.getElementById("nav").innerHTML=TABS.map(function(t){return'<button data-t="'+t[0]+'" aria-selected="'+(t[0]===tab&&pl===null)+'">'+t[1]+'</button>'}).join("");
+ document.getElementById("view").innerHTML=pl!==null?(ed===pl?formV(fp(pl)):plV()):({teams:teamsV,lead:leadV,top:topV,pls:plsV,"new":function(){return formV(null)},hof:hofV,log:logV})[tab]()}
+document.getElementById("themeToggle").addEventListener("click",function(){
+ var html=document.documentElement;
+ var cur=html.getAttribute("data-theme");
+ var next=cur==="light"?"dark":"light";
+ html.setAttribute("data-theme",next);
+ try{localStorage.setItem("gdyn_unified_theme",next)}catch(e){}
+});
+try{var savedTheme=localStorage.getItem("gdyn_unified_theme");if(savedTheme){document.documentElement.setAttribute("data-theme",savedTheme)}}catch(e){}
+document.addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;var a=b.dataset.a,v=b.dataset.v;
+ if(b.dataset.t){tab=b.dataset.t;pl=null;ed=tab==="new"?"new":null;if(tab==="teams")sel=null;render();return}
+ if(b.id==="reset"){if(b.dataset.armed){fresh();tab="teams";sel=null;pl=null;save();render();b.textContent="Reset league";delete b.dataset.armed}else{b.dataset.armed="1";b.textContent="Click again to erase everything";setTimeout(function(){b.textContent="Reset league";delete b.dataset.armed},4000)}return}
+ if(a==="play")play();else if(a==="team"){sel=+v;render()}else if(a==="back"){if(pl!==null){pl=null;ed=null}else sel=null;render()}
+ else if(a==="pl"){pl=+v;render()}else if(a==="sc"){sc=v;render()}else if(a==="st"){st=v;render()}else if(a==="cf"){cf=v;render()}else if(a==="edit"){pl=+v;ed=+v;render()}else if(a==="cancel"){ed=null;render()}else if(a==="savep")savep()});
+document.addEventListener("input",function(e){if(e.target.id==="q"){q=e.target.value;var resEl=document.getElementById("res");if(resEl)resEl.innerHTML=res()}});
+load();render();
+})();
+</script>
+</body>
+</html>
